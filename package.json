@@ -1,0 +1,35 @@
+{
+  "name": "store-your-task-backend",
+  "version": "1.0.0",
+  "description": "A robust backend for a to-do application supporting comprehensive user and task management features. This Node.js server handles user authentication, task CRUD operations, and account management functionalities including sign up, login, logout, password change, password reset, and more. Built to support scalable and secure task management for individual users.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon -r dotenv/config src/index.js"
+  },
+  "keywords": [
+    "todo app",
+    "task management",
+    "backend",
+    "authentication",
+    "user management"
+  ],
+  "author": "CodeWithKartikey",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "email-validator": "^2.0.4",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.13"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5"
+  }
+}
