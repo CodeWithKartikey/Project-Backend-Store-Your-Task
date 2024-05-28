@@ -6,6 +6,8 @@ import { Router } from "express";
 // Import controller functions
 import {
     registerUser,
+    resendVerificationEmail,
+    verifyEmail,
     loginUser,
     logoutUser,
     changePassword,
@@ -22,6 +24,10 @@ const router = Router();
 
 // Route for user registration
 router.post('/register', registerUser);
+// Route for resend verification email
+router.get('/resend-verification-email', isLoggedIn, resendVerificationEmail);
+// Route for verify email using the token
+router.post('/verify-email/:emailToken', verifyEmail);
 // Route for user login
 router.post('/login', loginUser);
 // Route for user logout

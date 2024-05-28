@@ -51,6 +51,16 @@ const registerUser = asyncHandler(async (req, res) => {
         password
     });
 
+    const emailToken = user.generateEmailVerificationToken();
+    await user.save();
+
+    const emailVerificationLink = `${process.env.CORS_ORIGIN}/verify-email/${emailToken}`;
+
+    const subject = 'Verify email';
+    const message = `Please click the following link to verify your email: <a href="${emailVerificationLink}" target="_blank">Verify email</a>. If the link is not clickable, please copy and paste it into your browser.`
+
+    await sendEmail(email, subject, message);
+
     const newUser = await User.findById(user._id).select('-password');
     if(!newUser) {
         throw new ApiError(404, 'Something went wrong while registering the user.');
@@ -59,6 +69,89 @@ const registerUser = asyncHandler(async (req, res) => {
     return res
         .status(201)
         .json(new ApiResponse(201, newUser, 'Registration completed succesfully.'));
+});
+
+/*
+    Controller function to resend verification email link.
+    Handles the HTTP Get request to resend verification email link.
+
+    @param {Object} req - Express request object.
+    @param {Object} res - Express response object.
+    @returns {Object} JSON response indicating success or failure.
+*/
+const resendVerificationEmail = asyncHandler(async (req, res) => {
+
+    const { id } = req.user;
+
+    const user = await User.findById(id).select('-password');
+    if(!user) {
+        throw new ApiError(404, 'User is not logged in, Please login or does not exist.');
+    }
+
+    if(user.userVerified) {
+        return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'User is already verified.'));
+    } else {
+        const emailToken = user.generateEmailVerificationToken();
+        await user.save();
+    
+        const emailVerificationLink = `${process.env.CORS_ORIGIN}/verify-email/${emailToken}`;
+    
+        const email = user.email;
+        const subject = 'Verify email';
+        const message = `Please click the following link to verify your email: <a href="${emailVerificationLink}" target="_blank">Verify email</a>. If the link is not clickable, please copy and paste it into your browser.`
+    
+        await sendEmail(email, subject, message);
+    
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, 'Email verification link sent successfully.'));
+    }
+});
+
+/*
+    Controller function to verify email of a user.
+    Handles the HTTP POST request to verify email of a user.
+
+    @param {Object} req - The HTTP request object.
+    @param {Object} res - The HTTP response object.
+    @returns {Object} HTTP response with JSON data.
+*/
+const verifyEmail = asyncHandler(async (req, res) => {
+
+    const { emailToken } = req.params;
+
+    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
+
+    // Find and update the user in one query to avoid multiple database round trips
+    const user = await User.findOneAndUpdate(
+        {
+            emailVerificationToken: hashedEmailToken,
+            emailVerificationExpiry: { $gt: Date.now() }
+        },
+        {
+            $set: {
+                userVerified: true,
+                emailVerificationToken: null,
+                emailVerificationExpiry: null
+            }
+        },
+        { 
+            new: true, 
+            select: '-password' 
+        }
+    );
+
+    if (!user) {
+        return res
+            .status(401)
+            .json(new ApiResponse(401, null, "Invalid or expired token. Please try again."));
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Email verification successful."));
 });
 
 /*
@@ -217,7 +310,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, {}, `A password reset link has been sent successfully to ${email}. Please check your email inbox.`));
-
 });
 
 /*
@@ -242,7 +334,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     const user = await User
         .findOne({
             forgotPasswordToken: hashedResetToken,
-            forgotPasswordExpiryDate: { $gt: Date.now() }
+            forgotPasswordExpiry: { $gt: Date.now() }
         })
         .select('-password');
     if (!user) {
@@ -261,7 +353,7 @@ const resetPassword = asyncHandler(async (req, res) => {
             $set: { 
                 password: hashedPassword, 
                 forgotPasswordToken: null, 
-                forgotPasswordExpiryDate: null 
+                forgotPasswordExpiry: null 
             } 
         },
         { new: true } 
@@ -298,5 +390,5 @@ const userDetails = asyncHandler(async (req, res) => {
 });
 
 // Exporting functions related to user authentication and management
-export { registerUser, loginUser, logoutUser, changePassword, forgotPassword, resetPassword, userDetails };
+export { registerUser, resendVerificationEmail, verifyEmail, loginUser, logoutUser, changePassword, forgotPassword, resetPassword, userDetails };
 

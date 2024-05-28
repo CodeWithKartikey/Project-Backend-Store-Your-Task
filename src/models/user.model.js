@@ -8,6 +8,7 @@ import JWT from 'jsonwebtoken';
 import crypto from 'crypto'; 
 // Schema and model objects from Mongoose for MongoDB interactions
 import { Schema, model } from "mongoose";
+import { type } from 'os';
 
 /*
     User Schema definition
@@ -35,10 +36,20 @@ const userSchema = new Schema(
             maxLength: [256, 'Password should be less than 256 characters long.'],
             select: false
         },
+        userVerified: {
+            type: Boolean,
+            default: false
+        },
+        emailVerificationToken: {
+            type: String,
+        },
+        emailVerificationExpiry: {
+            type: Date
+        },
         forgotPasswordToken: {
             type: String,
         },
-        forgotPasswordExpiryDate: {
+        forgotPasswordExpiry: {
             type: Date
         }
     }, {timestamps: true}
@@ -83,13 +94,24 @@ userSchema.methods.generateJWTToken = function() {
 };
 
 /*
+    Method to generate email verification token
+    @returns {string} - Email verification token
+*/
+userSchema.methods.generateEmailVerificationToken = function() {
+    const emailToken = crypto.randomBytes(20).toString('hex');
+    this.emailVerificationToken = crypto.createHash('sha256').update(emailToken).digest('hex');
+    this.emailVerificationExpiry = Date.now() + (15 * 60 * 1000);
+    return emailToken;
+};
+
+/*
     Method to generate password reset token
     @returns {string} - Password reset token
 */
 userSchema.methods.generatePasswordResetToken = function() {
     const resetToken = crypto.randomBytes(20).toString('hex');
     this.forgotPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    this.forgotPasswordExpiryDate = Date.now() + (15 * 60 * 1000);
+    this.forgotPasswordExpiry = Date.now() + (15 * 60 * 1000);
     return resetToken;
 };
 
