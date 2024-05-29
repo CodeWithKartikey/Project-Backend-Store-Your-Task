@@ -21,12 +21,12 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "email-validator": "^2.0.4",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.3.2",
     "morgan": "^1.10.0",
-    "nodemailer": "^6.9.13"
+    "nodemailer": "^6.9.13",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
