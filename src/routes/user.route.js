@@ -6,10 +6,10 @@ import { Router } from "express";
 // Import controller functions
 import {
     registerUser,
-    resendVerificationEmail,
-    verifyEmail,
     loginUser,
     logoutUser,
+    verifyEmail,
+    resendVerificationEmail,
     changePassword,
     forgotPassword,
     resetPassword,
@@ -24,14 +24,14 @@ const router = Router();
 
 // Route for user registration
 router.post('/register', registerUser);
-// Route for resend verification email
-router.get('/resend-verification-email', isLoggedIn, resendVerificationEmail);
-// Route for verify email using the token
-router.post('/verify-email/:emailToken', verifyEmail);
 // Route for user login
 router.post('/login', loginUser);
 // Route for user logout
 router.get('/logout', isLoggedIn, logoutUser);
+// Route for verify email using the token
+router.post('/verify-email/:emailToken', verifyEmail);
+// Route for resend verification email
+router.post('/resend-verification-email', isLoggedIn, resendVerificationEmail);
 // Route for changing user password
 router.post('/change-password', isLoggedIn, changePassword);
 // Route for requesting a password reset

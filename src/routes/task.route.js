@@ -21,7 +21,7 @@ const router = Router();
 router.get('/get-all-tasks', isLoggedIn, getTasks);
 // Route for add a task
 router.post('/add-task', isLoggedIn, addTask);
-// Route for update task status
+// Route for update a task status
 router.put('/update-task/:taskId', isLoggedIn, updateTask);
 // Route for delete a task
 router.delete('/delete-task/:taskId', isLoggedIn, deleteTask);

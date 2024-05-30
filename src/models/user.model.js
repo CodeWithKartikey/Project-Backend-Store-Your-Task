@@ -8,7 +8,6 @@ import JWT from 'jsonwebtoken';
 import crypto from 'crypto'; 
 // Schema and model objects from Mongoose for MongoDB interactions
 import { Schema, model } from "mongoose";
-import { type } from 'os';
 
 /*
     User Schema definition

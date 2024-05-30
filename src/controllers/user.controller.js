@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const emailVerificationLink = `${process.env.CORS_ORIGIN}/verify-email/${emailToken}`;
 
-    const subject = 'Verify email';
+    const subject = 'Verify Your Email';
     const message = `
         <!DOCTYPE html>
         <html>
@@ -138,148 +138,6 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 /*
-    Controller function to resend verification email link.
-    Handles the HTTP Get request to resend verification email link.
-
-    @param {Object} req - Express request object.
-    @param {Object} res - Express response object.
-    @returns {Object} JSON response indicating success or failure.
-*/
-const resendVerificationEmail = asyncHandler(async (req, res) => {
-
-    const { id } = req.user;
-
-    const user = await User.findById(id).select('-password');
-    if(!user) {
-        throw new ApiError(404, 'User is not logged in, Please login or does not exist.');
-    }
-
-    if(user.userVerified) {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, null, 'User is already verified.'));
-    }
-
-    const emailToken = user.generateEmailVerificationToken();
-    await user.save();
-    
-    const emailVerificationLink = `${process.env.CORS_ORIGIN}/verify-email/${emailToken}`;
-    
-    const email = user.email;
-    const subject = 'Verify email';
-    const message = `
-        <!DOCTYPE html>
-        <html>
-            <head>
-                    <style>
-                        .email-container {
-                            font-family: Arial, sans-serif;
-                            line-height: 1.6;
-                        }
-                        .email-header {
-                            background-color: #f8f9fa;
-                            padding: 20px;
-                            text-align: center;
-                        }
-                        .email-content {
-                            padding: 20px;
-                        }
-                        .email-footer {
-                            margin-top: 20px;
-                            padding: 20px;
-                            background-color: #f8f9fa;
-                            text-align: center;
-                        }
-                        .verify-button {
-                            display: inline-block;
-                            padding: 10px 20px;
-                            color: white;
-                            background-color: #007bff;
-                            text-decoration: none;
-                            border-radius: 5px;
-                        }
-                        .verify-link {
-                            color: #007bff;
-                            text-decoration: underline;
-                        }
-                    </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <div class="email-header">
-                        <h2>Verify Your Email Address</h2>
-                    </div>
-                    <div class="email-content">
-                        <p>Hi ${user.name},</p>
-                        <p>Thank you for registering with us. To complete your registration, please verify your email address by clicking the button below:</p>
-                        <p>
-                            <a href="${emailVerificationLink}" class="verify-button" target="_blank">Verify Email</a>
-                        </p>
-                        <p>If the button above does not work, please copy and paste the following link into your browser:</p>
-                        <p>
-                            <a href="${emailVerificationLink}" class="verify-link" target="_blank">${emailVerificationLink}</a>
-                        </p>
-                    </div>
-                    <div class="email-footer">
-                        <p>If you did not create an account with us, please ignore this email.</p>
-                    </div>
-                </div>
-            </body>
-        </html>
-        `;
-    
-    await sendEmail(email, subject, message);
-    
-    return res
-        .status(200)
-        .json(new ApiResponse(200, null, 'Email verification link sent successfully.'));
-});
-
-/*
-    Controller function to verify email of a user.
-    Handles the HTTP POST request to verify email of a user.
-
-    @param {Object} req - The HTTP request object.
-    @param {Object} res - The HTTP response object.
-    @returns {Object} HTTP response with JSON data.
-*/
-const verifyEmail = asyncHandler(async (req, res) => {
-
-    const { emailToken } = req.params;
-
-    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
-
-    // Find and update the user in one query to avoid multiple database round trips
-    const user = await User.findOneAndUpdate(
-        {
-            emailVerificationToken: hashedEmailToken,
-            emailVerificationExpiry: { $gt: Date.now() }
-        },
-        {
-            $set: {
-                userVerified: true,
-                emailVerificationToken: null,
-                emailVerificationExpiry: null
-            }
-        },
-        { 
-            new: true, 
-            select: '-password' 
-        }
-    );
-
-    if (!user) {
-        return res
-            .status(401)
-            .json(new ApiResponse(401, null, "Invalid or expired token. Please try again."));
-    }
-
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "Email verification successful."));
-});
-
-/*
     Controller function to log in a user.
     Handles the HTTP POST request to log in a user.
 
@@ -350,6 +208,148 @@ const logoutUser = asyncHandler(async (req, res) => {
         .status(200)
         .cookie('token', null, cookieOptions)
         .json(new ApiResponse(200, {}, 'Logout completed successfully.'));
+});
+
+/*
+    Controller function to verify the email of a user.
+    Handles the HTTP POST request to verify the email of a user.
+
+    @param {Object} req - The HTTP request object.
+    @param {Object} res - The HTTP response object.
+    @returns {Object} HTTP response with JSON data.
+*/
+const verifyEmail = asyncHandler(async (req, res) => {
+
+    const { emailToken } = req.params;
+
+    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
+
+    // Find and update the user in one query to avoid multiple database round trips
+    const user = await User.findOneAndUpdate(
+        {
+            emailVerificationToken: hashedEmailToken,
+            emailVerificationExpiry: { $gt: Date.now() }
+        },
+        {
+            $set: {
+                userVerified: true,
+                emailVerificationToken: null,
+                emailVerificationExpiry: null
+            }
+        },
+        { 
+            new: true, 
+            select: '-password' 
+        }
+    );
+
+    if (!user) {
+        return res
+            .status(401)
+            .json(new ApiResponse(401, null, "Invalid or expired token. Please try again."));
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Email verification successful."));
+});
+
+/*
+    Controller function to resend verification email link.
+    Handles the HTTP POST request to resend verification email link.
+
+    @param {Object} req - Express request object.
+    @param {Object} res - Express response object.
+    @returns {Object} JSON response indicating success or failure.
+*/
+const resendVerificationEmail = asyncHandler(async (req, res) => {
+
+    const { id } = req.user;
+
+    const user = await User.findById(id);
+    if(!user) {
+        throw new ApiError(404, 'User is not logged in, Please login or does not exist.');
+    }
+
+    if(user.userVerified) {
+        return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'User is already verified.'));
+    }
+
+    const emailToken = user.generateEmailVerificationToken();
+    await user.save();
+    
+    const emailVerificationLink = `${process.env.CORS_ORIGIN}/verify-email/${emailToken}`;
+    
+    const email = user.email;
+    const subject = 'Verify Your Email';
+    const message = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <style>
+                    .email-container {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                    }
+                    .email-header {
+                        background-color: #f8f9fa;
+                        padding: 20px;
+                        text-align: center;
+                    }
+                    .email-content {
+                        padding: 20px;
+                    }
+                    .email-footer {
+                        margin-top: 20px;
+                        padding: 20px;
+                        background-color: #f8f9fa;
+                        text-align: center;
+                    }
+                    .verify-button {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        color: white;
+                        background-color: #007bff;
+                        text-decoration: none;
+                        border-radius: 5px;
+                    }
+                    .verify-link {
+                        color: #007bff;
+                        text-decoration: underline;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <div class="email-header">
+                        <h2>Verify Your Email Address</h2>
+                    </div>
+                    <div class="email-content">
+                        <p>Hi ${user.name},</p>
+                        <p>Thank you for registering with us. To complete your registration, please verify your email address by clicking the button below:</p>
+                        <p>
+                            <a href="${emailVerificationLink}" class="verify-button" target="_blank">Verify Email</a>
+                        </p>
+                        <p>If the button above does not work, please copy and paste the following link into your browser:</p>
+                        <p>
+                            <a href="${emailVerificationLink}" class="verify-link" target="_blank">${emailVerificationLink}</a>
+                        </p>
+                    </div>
+                    <div class="email-footer">
+                        <p>If you did not create an account with us, please ignore this email.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        `;
+    
+    await sendEmail(email, subject, message);
+    
+    return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'Email verification link sent successfully.'));
 });
 
 /*
@@ -465,27 +465,27 @@ const forgotPassword = asyncHandler(async (req, res) => {
                     }
                 </style>
             </head>
-        <body>
-        <div class="email-container">
-            <div class="email-header">
-                <h2>Password Reset Request</h2>
-            </div>
-            <div class="email-content">
-                <p>Hi ${user.name},</p>
-                <p>We received a request to reset your password. Click the button below to reset your password:</p>
-                <p
-                    <a href="${passwordResetLink}" class="reset-button" target="_blank">Reset Password</a>
-                </p>
-                <p>If the button above does not work, please copy and paste the following link into your browser:</p>
-                <p>
-                    <a href="${passwordResetLink}" class="reset-link" target="_blank">${passwordResetLink}</a>
-                </p>
-            </div>
-            <div class="email-footer">
-                <p>If you did not request a password reset, please ignore this email.</p>
-            </div>
-        </div>
-        </body>
+            <body>
+                <div class="email-container">
+                    <div class="email-header">
+                        <h2>Password Reset Request</h2>
+                    </div>
+                    <div class="email-content">
+                        <p>Hi ${user.name},</p>
+                        <p>We received a request to reset your password. Click the button below to reset your password:</p>
+                        <p
+                            <a href="${passwordResetLink}" class="reset-button" target="_blank">Reset Password</a>
+                        </p>
+                        <p>If the button above does not work, please copy and paste the following link into your browser:</p>
+                        <p>
+                            <a href="${passwordResetLink}" class="reset-link" target="_blank">${passwordResetLink}</a>
+                        </p>
+                    </div>
+                    <div class="email-footer">
+                        <p>If you did not request a password reset, please ignore this email.</p>
+                    </div>
+                </div>
+            </body>
         </html>
         `;
 
@@ -574,5 +574,5 @@ const userDetails = asyncHandler(async (req, res) => {
 });
 
 // Exporting functions related to user authentication and management
-export { registerUser, resendVerificationEmail, verifyEmail, loginUser, logoutUser, changePassword, forgotPassword, resetPassword, userDetails };
+export { registerUser, loginUser, logoutUser, verifyEmail, resendVerificationEmail, changePassword, forgotPassword, resetPassword, userDetails };
 
