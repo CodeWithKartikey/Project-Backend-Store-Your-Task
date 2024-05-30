@@ -1,5 +1,5 @@
 {
-  "name": "store-your-task-backend",
+  "name": "backend-store-your-task",
   "version": "1.0.0",
   "description": "A robust backend for a to-do application supporting comprehensive user and task management features. This Node.js server handles user authentication, task CRUD operations, and account management functionalities including sign up, login, logout, password change, password reset, and more. Built to support scalable and secure task management for individual users.",
   "type": "module",

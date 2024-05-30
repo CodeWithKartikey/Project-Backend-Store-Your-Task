@@ -1,4 +1,4 @@
-# Store-Your-Task-Backend
+# Project-Backend-Store-Your-Task
 
 ## Description
 
@@ -21,7 +21,8 @@ This repository contains the backend for a task management application called St
 - **mongoose**: For modeling application data and interacting with MongoDB.
 - **morgan**: For HTTP request logging during development.
 - **multer**: For handling multipart/form-data, primarily used for uploading files.
-- **nodemailer**: For sending emails.
+- **nodemailer**: For sending emails for various things.
+- **zod**: For validating the data.
 
 ## Installation
 
@@ -106,6 +107,6 @@ This project is licensed under the MIT License.
 
 ---
 
-Designed & Developed by CodeWithKartikey - Happy coding. 🚀
+Designed, Developed & Maintained by CodeWithKartikey - Happy coding. 🚀
 
 ---
